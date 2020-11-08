@@ -1,25 +1,27 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { Redirect, Route, Switch } from 'react-router-dom';
+import Login from './components/SignInSignUp/login';
+import { ThemeProvider } from '@material-ui/core';
+import { myTheme } from './components/theme/theme';
+import Header from './components/header/header';
+import { useStateValue } from './components/context/global-state';
+import SignUp from './components/SignInSignUp/sign-up';
 
 function App() {
+  const [{user},dispatch]=useStateValue()
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <ThemeProvider theme={myTheme}>
+    <div className="App" style={{width:'100vw',height:'100vh'}}>
+    {user===null?null:<Header/>}
+      <Switch>
+      {user===null?<Route exact path='/login' component={Login}/>:<Redirect to='/' />}
+      {user===null?<Route exact path='/signup' component={SignUp}/>:<Redirect to='/' />}
+    
+      </Switch>
     </div>
+    </ThemeProvider>
   );
 }
 

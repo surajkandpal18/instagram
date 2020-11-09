@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from './logo.svg';
+
 import './App.css';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import Login from './components/SignInSignUp/login';
@@ -10,7 +10,7 @@ import { useStateValue } from './components/context/global-state';
 import SignUp from './components/SignInSignUp/sign-up';
 
 function App() {
-  const [{user},dispatch]=useStateValue()
+  const [{user}]=useStateValue()
   return (
     <ThemeProvider theme={myTheme}>
     <div className="App" style={{width:'100vw',height:'100vh'}}>

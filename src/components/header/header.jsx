@@ -19,6 +19,8 @@ import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
 import CachedOutlinedIcon from "@material-ui/icons/CachedOutlined";
 import React from "react";
 import { useStateValue } from "../context/global-state";
+import { actionTypes } from "../context/reducer";
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   toolbar: {
@@ -27,9 +29,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function Header() {
-  const [{ user }] = useStateValue();
+  const [{ user }, dispatch] = useStateValue();
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const history = useHistory();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -37,6 +40,13 @@ function Header() {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    dispatch({ type: actionTypes.SET_USER, payload: null });
+    dispatch({ type: actionTypes.SET_TOKEN, payload: null });
+    window.localStorage.clear();
+    history.push("/login");
   };
   return (
     <React.Fragment>
@@ -67,8 +77,8 @@ function Header() {
               style={{ marginRight: "0.5em", cursor: "pointer" }}
             />
             <Avatar
-              alt={user.name}
-              src={user.profileImg}
+              alt={user.displayName}
+              src={user.profilePic}
               style={{ width: "1.5em", height: "1.5em", cursor: "pointer" }}
               onClick={handleClick}
             />
@@ -108,7 +118,12 @@ function Header() {
           <ListItemText primary="Switch Account" />
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleClose}>
+        <MenuItem
+          onClick={(e) => {
+            handleLogout();
+            handleClose();
+          }}
+        >
           <ListItemText primary="Logout" />
         </MenuItem>
       </Menu>

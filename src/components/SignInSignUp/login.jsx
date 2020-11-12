@@ -1,5 +1,6 @@
 import {
   Button,
+  CircularProgress,
   Divider,
   Grid,
   makeStyles,
@@ -41,6 +42,7 @@ function Login() {
     password: "",
   });
   const [something, dispatch] = useStateValue();
+  const [loader, setLoader] = useState(false);
   const history = useHistory();
   const classes = useStyle();
 
@@ -49,6 +51,7 @@ function Login() {
   };
 
   const signIn = () => {
+    setLoader(true);
     fetch(`${baseUrl}/user/login`, {
       method: "POST",
       headers: {
@@ -63,6 +66,7 @@ function Login() {
         let receivedata = await res.json();
 
         receivedata.errors.map((item) => console.log(item.msg));
+        setLoader(false);
       })
       .then((data) => {
         console.log(data);
@@ -71,21 +75,37 @@ function Login() {
           type: actionTypes.SET_TOKEN,
           payload: token,
         });
+        //  window.localStorage.setItem("token", JSON.stringify(token));
         fetch(`${baseUrl}/user/me`, {
           method: "GET",
           headers: {
-            token: something.token,
+            token: token,
           },
         })
-          .then((res) => res.json())
+          .then((res) => {
+            if (res.ok) {
+              return res.json();
+            }
+            if (res.status === 401) {
+              console.log("authentication token error");
+            }
+            throw new Error("error has occured");
+          })
           .then((data) => {
             dispatch({ type: actionTypes.SET_USER, payload: data });
+            setLoader(false);
+            window.localStorage.setItem("user", JSON.stringify(data));
+
             history.push("/");
           })
-          .catch((err) => console.log(err));
+          .catch((err) => {
+            console.log(err);
+            setLoader(false);
+          });
       })
       .catch((err) => {
         console.log("Network error has occured");
+        setLoader(false);
       });
   };
 
@@ -138,7 +158,11 @@ function Login() {
             className={classes.loginButton}
             onClick={signIn}
           >
-            Log In
+            {loader === true ? (
+              <CircularProgress style={{ color: "white" }} size={27} />
+            ) : (
+              "Log In"
+            )}
           </Button>
           <Divider style={{ marginTop: "1em" }} />
         </Grid>

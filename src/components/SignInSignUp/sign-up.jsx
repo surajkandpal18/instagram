@@ -1,5 +1,6 @@
 import {
   Button,
+  CircularProgress,
   Grid,
   makeStyles,
   TextField,
@@ -10,6 +11,9 @@ import { useTheme } from "@material-ui/styles";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import insta from "../../assets/instalogo.png";
+import { useStateValue } from "../context/global-state";
+import { actionTypes } from "../context/reducer";
+import { baseUrl } from "../utils/store";
 
 const useStyle = makeStyles((theme) => ({
   signUpBox: {
@@ -46,12 +50,65 @@ function SignUp() {
   });
   const classes = useStyle();
   const history = useHistory();
+  const [something, dispatch] = useStateValue();
   const theme = useTheme();
+  const [loader, setLoader] = useState();
   const matchesXs = useMediaQuery(theme.breakpoints.down("xs"));
 
   const handleChange = (e) => {
     setLogin({ ...login, [e.target.name]: e.target.value });
   };
+
+  const register = () => {
+    setLoader(true);
+    fetch(`${baseUrl}/user/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(login),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          return res.json();
+        }
+        let receivedata = await res.json();
+
+        receivedata && receivedata.errors.map((item) => console.log(item.msg));
+        setLoader(false);
+        throw new Error("error has occured");
+      })
+      .then((data) => {
+        console.log(data);
+        let token = data.token;
+        dispatch({
+          type: actionTypes.SET_TOKEN,
+          payload: token,
+        });
+        fetch(`${baseUrl}/user/me`, {
+          method: "GET",
+          headers: {
+            token: something.token,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            dispatch({ type: actionTypes.SET_USER, payload: data });
+            setLoader(false);
+            window.localStorage.setItem("user", JSON.stringify(data));
+            history.push("/");
+          })
+          .catch((err) => {
+            console.log(err);
+            setLoader(false);
+          });
+      })
+      .catch((err) => {
+        console.log("Network error has occured");
+        setLoader(false);
+      });
+  };
+
   return (
     <Grid
       container
@@ -124,8 +181,16 @@ function SignUp() {
           />
         </Grid>
         <Grid item>
-          <Button variant="container" className={classes.signUpButton}>
-            Sign Up
+          <Button
+            variant="contained"
+            className={classes.signUpButton}
+            onClick={register}
+          >
+            {loader === true ? (
+              <CircularProgress size={27} style={{ color: "#fff" }} />
+            ) : (
+              "Sign Up"
+            )}
           </Button>
         </Grid>
       </Grid>
@@ -137,7 +202,7 @@ function SignUp() {
         className={classes.signUpBox}
         style={{ marginTop: "1em" }}
       >
-        <Typography variant="body 1" color="initial">
+        <Typography variant="body1" color="initial">
           Already have an account ?{" "}
           <span
             style={{ color: "#2196f3", fontWeight: "bold", cursor: "pointer" }}
